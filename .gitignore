@@ -1,0 +1,11 @@
+node_modules
+.vscode
+logs
+config
+.env.dev
+.env.prod
+uploads
+*.pem
+
+
+
