@@ -1,5 +1,5 @@
 import { UserModel } from '../../DB/models/user.model.js';
-import { asyncHandler } from '../../utils/response.js';
+import { asyncHandler, successHandler } from '../../utils/response.js';
 
 export const signup = asyncHandler(async (req, res, next) => {
   const { fullName, email, password, phone } = req.body;
@@ -7,10 +7,10 @@ export const signup = asyncHandler(async (req, res, next) => {
   const checkUserExist = await UserModel.findOne({ email });
 
   if (checkUserExist) {
-    return res.status(409).json({ message: 'email already exist' });
+    return next(new Error('email already exist', { cause: 409 }));
   }
   const [user] = await UserModel.create([{ fullName, email, password, phone }]);
-  return res.status(201).json({ message: 'Done', user });
+  return successHandler({ res, status: 201 });
 });
 
 export const login = asyncHandler(async (req, res, next) => {
@@ -19,8 +19,8 @@ export const login = asyncHandler(async (req, res, next) => {
   const user = await UserModel.findOne({ email, password });
 
   if (!user) {
-    return res.status(404).json({ message: 'in-valid email or password' });
+    return next(new Error('in-valid email or password', { cause: 404 }));
   }
 
-  return res.status(200).json({ message: 'Done', user });
+  return successHandler({ res, data: { user } });
 });
