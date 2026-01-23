@@ -50,10 +50,20 @@ const bootstrap = async () => {
   app.use('/user', userController);
 
   // ===============================
-  // 🚫 Global Error Handler
+  // ❌ Not Found Handler
   // ===============================
   app.all('{/*dummy}', (req, res) => {
     res.status(404).json({ message: 'Route not found 🚫' });
+  });
+
+  // ===============================
+  // 🧯 Global Error Handler
+  // ===============================
+  app.use((error, req, res, next) => {
+    console.log(colors.red({ error_stack: error.stack }));
+    res.status(error.cause || 400).json({
+      message: error.message,
+    });
   });
 
   // ===============================
