@@ -1,6 +1,10 @@
 import * as DbService from '../../DB/db.service.js';
 import { UserModel } from '../../DB/models/user.model.js';
 import { asyncHandler, successHandler } from '../../utils/response.js';
+import {
+  compareHash,
+  generateHash,
+} from '../../utils/Security/hash.security.js';
 
 export const signup = asyncHandler(async (req, res, next) => {
   const { fullName, email, password, phone } = req.body;
@@ -13,9 +17,11 @@ export const signup = asyncHandler(async (req, res, next) => {
   if (checkUserExist) {
     return next(new Error('email already exist', { cause: 409 }));
   }
+
+  const hashPassword = await generateHash({ plainText: password });
   const [user] = await DbService.create({
     model: UserModel,
-    data: [{ fullName, email, password, phone }],
+    data: [{ fullName, email, password: hashPassword, phone }],
   });
   return successHandler({ res, status: 201, data: { user } });
 });
@@ -25,10 +31,19 @@ export const login = asyncHandler(async (req, res, next) => {
 
   const user = await DbService.findOne({
     model: UserModel,
-    filter: { email, password },
+    filter: { email },
   });
 
   if (!user) {
+    return next(new Error('in-valid email or password', { cause: 404 }));
+  }
+
+  const isPasswordMatched = await compareHash({
+    plainText: password,
+    hashedText: user.password,
+  });
+
+  if (!isPasswordMatched) {
     return next(new Error('in-valid email or password', { cause: 404 }));
   }
 
