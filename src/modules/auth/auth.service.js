@@ -1,6 +1,7 @@
 import * as DbService from '../../DB/db.service.js';
 import { UserModel } from '../../DB/models/user.model.js';
 import { asyncHandler, successHandler } from '../../utils/response.js';
+import { decrypt, encrypt } from '../../utils/Security/encryption.security.js';
 import {
   compareHash,
   generateHash,
@@ -21,7 +22,9 @@ export const signup = asyncHandler(async (req, res, next) => {
   const hashPassword = await generateHash({ plainText: password });
   const [user] = await DbService.create({
     model: UserModel,
-    data: [{ fullName, email, password: hashPassword, phone }],
+    data: [
+      { fullName, email, password: hashPassword, phone: await encrypt(phone) },
+    ],
   });
   return successHandler({ res, status: 201, data: { user } });
 });
