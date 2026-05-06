@@ -43,7 +43,7 @@ const bootstrap = async () => {
 
   //========================================== ❌ Not Found Handler ==========================================
   app.all('{/*dummy}', (req, res) => {
-    res.status(404).json({ message: 'Route not found 🚫' });
+    res.status(404).json({ message: 'Route not found ❌ dummy' });
   });
 
   //========================================== 🧯 Global Error Handler ==========================================

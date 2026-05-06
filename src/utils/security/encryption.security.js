@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { buffer } from 'stream/consumers';
 
 // ===================================SYMMETRIC ENCRYPTION===========================================
 let cachedEncryptionKey;
@@ -7,7 +8,6 @@ const getEncryptionKey = () => {
   if (cachedEncryptionKey) return cachedEncryptionKey;
 
   const secret = process.env.ENCRYPTION_SECRET_KEY;
-
   if (!secret) {
     throw new Error('ENCRYPTION_SECRET_KEY environment variable is not set');
   }
@@ -25,7 +25,6 @@ const getEncryptionKey = () => {
 export const encrypt = async (text) => {
   try {
     const iv = crypto.randomBytes(16);
-    console.log({ iv });
     const cipher = crypto.createCipheriv('aes-256-cbc', getEncryptionKey(), iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
