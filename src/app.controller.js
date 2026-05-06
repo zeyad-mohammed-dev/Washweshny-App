@@ -1,6 +1,4 @@
-// ===============================
-// 🌍 Environment Configuration
-// ===============================
+//========================================== 🌍 Environment Configuration ==========================================
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -29,19 +27,13 @@ const bootstrap = async () => {
   const app = express();
   const port = process.env.PORT || 5000;
 
-  // ===============================
-  // 📚 Database Connection
-  // ===============================
+  //========================================== 📚 Database Connection ==========================================
   await connectDB();
 
-  // ===============================
-  // 🧰 Global Middlewares
-  // ===============================
+  //========================================== 🧰 Global Middlewares ==========================================
   app.use(express.json());
 
-  // ===============================
-  // 🌐 Routes
-  // ===============================
+  //========================================== 🌐 Routes ==========================================
   app.get('/', (req, res) => {
     res.json({ message: 'Welcome to Washweshny App 💖' });
   });
@@ -49,16 +41,12 @@ const bootstrap = async () => {
   app.use('/auth', authController);
   app.use('/user', userController);
 
-  // ===============================
-  // ❌ Not Found Handler
-  // ===============================
+  //========================================== ❌ Not Found Handler ==========================================
   app.all('{/*dummy}', (req, res) => {
-    res.status(404).json({ message: 'Route not found 🚫' });
+    res.status(404).json({ message: 'Route not found ❌ dummy' });
   });
 
-  // ===============================
-  // 🧯 Global Error Handler
-  // ===============================
+  //========================================== 🧯 Global Error Handler ==========================================
   app.use((error, req, res, next) => {
     console.log(colors.red({ error_stack: error.stack }));
     res.status(error.cause || 400).json({
@@ -66,9 +54,7 @@ const bootstrap = async () => {
     });
   });
 
-  // ===============================
-  // 🚀 Start Server
-  // ===============================
+  //========================================== 🚀 Start Server ==========================================
   app.listen(port, () => {
     console.log(colors.bgBrightCyan(`Server listening on port ${port} 🚀`));
   });

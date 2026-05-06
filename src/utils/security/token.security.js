@@ -1,13 +1,13 @@
-import jwt from 'jsonwebtoken';
-import { roleEnum, UserModel } from '../../DB/models/user.model.js';
-import * as DbService from '../../DB/db.service.js';
+import jwt from "jsonwebtoken";
+import { roleEnum, UserModel } from "../../DB/models/user.model.js";
+import * as DbService from "../../DB/db.service.js";
 export const authSchemeEnum = {
-  bearer: 'Bearer',
-  system: 'System',
+  bearer: "Bearer",
+  system: "System",
 };
 export const tokenTypeEnum = {
-  access: 'access',
-  refresh: 'refresh',
+  access: "access",
+  refresh: "refresh",
 };
 
 export const generateToken = async ({
@@ -20,7 +20,7 @@ export const generateToken = async ({
 };
 
 export const verifyToken = async ({
-  token = '',
+  token = "",
   secretKey = process.env.JWT_ACCESS_SECRET_BEARER,
 }) => {
   const decoded = jwt.verify(token, secretKey);
@@ -47,13 +47,13 @@ export const getSecretKey = async ({ authScheme }) => {
 
 export const decodeToken = async ({
   next,
-  authorization = '',
+  authorization = "",
   tokenType = tokenTypeEnum.access,
 } = {}) => {
-  const [authScheme, token] = authorization.split(' ');
+  const [authScheme, token] = authorization.split(" ");
 
   if (!authScheme || !token) {
-    return next(new Error('missing authorization parts', { cause: 400 }));
+    return next(new Error("missing authorization parts", { cause: 400 }));
   }
   const secrets = await getSecretKey({ authScheme });
   const secretKey =
@@ -63,15 +63,15 @@ export const decodeToken = async ({
   const decoded = await verifyToken({ token, secretKey });
 
   if (!decoded || !decoded.id) {
-    return next(new Error('in-valid token', { cause: 401 }));
+    return next(new Error("in-valid token", { cause: 401 }));
   }
   const user = await DbService.findOne({
     model: UserModel,
     filter: { _id: decoded.id },
-    select: 'firstName lastName email phone',
+    select: "firstName lastName email phone",
   });
   if (!user) {
-    return next(new Error('Un-Authorized', { cause: 401 }));
+    return next(new Error("Un-Authorized", { cause: 401 }));
   }
   return user;
 };

@@ -6,7 +6,7 @@ export const asyncHandler = (fn) => {
       console.log(colors.red({ error_stack: error.stack }));
       return res
         .status(500)
-        .json({ error_message: 'server error', error, message: error.message });
+        .json({ error_message: 'server error', message: error.message });
     });
   };
 };
