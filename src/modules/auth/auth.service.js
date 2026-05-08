@@ -147,15 +147,30 @@ export const confirmEmail = asyncHandler(async (req, res, next) => {
 
 export async function verifyIdToken({ idToken } = {}) {
   const client = new OAuth2Client();
-  if (process.env.GOOGLE_CLIENT_IDs.split(',').length == 0) {
+  const googleClientIdsEnv = process.env.GOOGLE_CLIENT_IDs;
+
+  if (!googleClientIdsEnv || !googleClientIdsEnv.trim()) {
     throw new Error(
       'No Google Client IDs provides on the env please check it again',
       { cause: 404 }
     );
   }
+
+  const googleClientIds = googleClientIdsEnv
+    .split(',')
+    .map((clientId) => clientId.trim())
+    .filter(Boolean);
+
+  if (googleClientIds.length === 0) {
+    throw new Error(
+      'No Google Client IDs provides on the env please check it again',
+      { cause: 404 }
+    );
+  }
+
   const ticket = await client.verifyIdToken({
     idToken,
-    audience: process.env.GOOGLE_CLIENT_IDs.split(','),
+    audience: googleClientIds,
   });
   const payload = ticket.getPayload();
   return payload;
