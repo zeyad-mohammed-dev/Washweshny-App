@@ -29,7 +29,7 @@ export const updateOne = async ({
   update = {},
   options = {},
 }) => {
-  return await model.updateOne(filter, update, { new: true, ...options });
+  return await model.updateOne(filter, update, options);
 };
 
 export const deleteOne = async ({ model, filter = {} }) => {
