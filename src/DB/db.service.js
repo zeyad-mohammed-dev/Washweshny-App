@@ -11,7 +11,7 @@ export const findOne = async ({
   return await model.findOne(filter).select(select).populate(populate);
 };
 
-export const findById = async ({model, id, select = '', populate = []}) => {
+export const findById = async ({ model, id, select = '', populate = [] }) => {
   return await model.findById(id).select(select).populate(populate);
 };
 
@@ -21,4 +21,17 @@ export const create = async ({
   options = { validateBeforeSave: true },
 }) => {
   return await model.create(data, options);
+};
+
+export const updateOne = async ({
+  model,
+  filter = {},
+  update = {},
+  options = {},
+}) => {
+  return await model.updateOne(filter, update, options);
+};
+
+export const deleteOne = async ({ model, filter = {} }) => {
+  return await model.deleteOne(filter);
 };

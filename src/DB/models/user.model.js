@@ -13,7 +13,9 @@ const userSchema = new mongoose.Schema(
     },
     lastName: {
       type: String,
-      required: true,
+      required: function () {
+        return this.provider === providerEnum.system ? true : false;
+      },
       minlength: [2, 'Last name must be at least 2 characters long'],
       maxlength: [25, 'Last name must be at most 25 characters long'],
     },
@@ -55,6 +57,8 @@ const userSchema = new mongoose.Schema(
     },
 
     confirmEmail: Date,
+    confirmEmailOtp: String,
+    confirmEmailOtpExpiresAt: Date,
     picture: String,
   },
   {
