@@ -1,97 +1,146 @@
-import jwt from 'jsonwebtoken';
-import { roleEnum, UserModel } from '../../DB/models/user.model.js';
+import { OAuth2Client } from 'google-auth-library';
 import * as DbService from '../../DB/db.service.js';
-export const authSchemeEnum = {
-  bearer: 'Bearer',
-  system: 'System',
-};
-export const tokenTypeEnum = {
-  access: 'access',
-  refresh: 'refresh',
-};
+import {
+  providerEnum,
+  roleEnum,
+  UserModel,
+} from '../../DB/models/user.model.js';
+import { decrypt, encrypt } from '../../utils/Security/encryption.security.js';
+import {
+  compareHash,
+  generateHash,
+} from '../../utils/Security/hash.security.js';
+import { asyncHandler, successHandler } from '../../utils/response/response.js';
+import {
+  authSchemeEnum,
+  generateLoginCredentials,
+  generateToken,
+  getSecretKey,
+} from '../../utils/security/token.security.js';
 
-export const generateToken = async ({
-  payload = {},
-  secretKey = process.env.JWT_ACCESS_SECRET_BEARER,
-  expiresIn = process.env.JWT_ACCESS_EXPIRES_IN,
-}) => {
-  const token = jwt.sign(payload, secretKey, { expiresIn });
-  return token;
-};
+export const signup = asyncHandler(async (req, res, next) => {
+  const { fullName, email, password, phone } = req.body;
 
-export const verifyToken = async ({
-  token = '',
-  secretKey = process.env.JWT_ACCESS_SECRET_BEARER,
-}) => {
-  const decoded = jwt.verify(token, secretKey);
-  return decoded;
-};
+  const checkUserExist = await DbService.findOne({
+    model: UserModel,
+    filter: { email },
+  });
 
-export const getSecretKey = async ({ authScheme }) => {
-  const secrets = { accessSecret: undefined, refreshSecret: undefined };
-
-  switch (authScheme) {
-    case authSchemeEnum.bearer:
-      secrets.accessSecret = process.env.JWT_ACCESS_SECRET_BEARER;
-      secrets.refreshSecret = process.env.JWT_REFRESH_SECRET_BEARER;
-      break;
-    case authSchemeEnum.system:
-      secrets.accessSecret = process.env.JWT_ACCESS_SECRET_SYSTEM;
-      secrets.refreshSecret = process.env.JWT_REFRESH_SECRET_SYSTEM;
-      break;
-    default:
-      throw new Error(`Unknown authScheme: ${authScheme}`);
+  if (checkUserExist) {
+    return next(new Error('email already exist', { cause: 409 }));
   }
-  return secrets;
-};
 
-export const decodeToken = async ({
-  next,
-  authorization = '',
-  tokenType = tokenTypeEnum.access,
-} = {}) => {
-  const [authScheme, token] = authorization.split(' ');
+  const hashPassword = await generateHash({ plainText: password });
+  const [user] = await DbService.create({
+    model: UserModel,
+    data: [
+      { fullName, email, password: hashPassword, phone: await encrypt(phone) },
+    ],
+  });
+  return successHandler({ res, status: 201, data: { user } });
+});
 
-  if (!authScheme || !token) {
-    return next(new Error('missing authorization parts', { cause: 400 }));
-  }
-  const secrets = await getSecretKey({ authScheme });
-  const secretKey =
-    tokenType === tokenTypeEnum.access
-      ? secrets.accessSecret
-      : secrets.refreshSecret;
-  const decoded = await verifyToken({ token, secretKey });
+export const login = asyncHandler(async (req, res, next) => {
+  const { email, password } = req.body;
 
-  if (!decoded || !decoded.id) {
-    return next(new Error('in-valid token', { cause: 401 }));
-  }
   const user = await DbService.findOne({
     model: UserModel,
-    filter: { _id: decoded.id },
-    select: 'firstName lastName email phone',
+    filter: { email, provider: providerEnum.system },
   });
+
   if (!user) {
-    return next(new Error('Un-Authorized', { cause: 401 }));
+    return next(new Error('in-valid email or password', { cause: 404 }));
   }
-  return user;
-};
 
-export const generateLoginCredentials = async ({ user }) => {
-  const authScheme =
-    user.role !== roleEnum.user ? authSchemeEnum.system : authSchemeEnum.bearer;
-
-  const secrets = await getSecretKey({ authScheme });
-
-  const accessToken = await generateToken({
-    payload: { id: user._id },
-    secretKey: secrets.accessSecret,
-    expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
-  });
-  const refreshToken = await generateToken({
-    payload: { id: user._id },
-    secretKey: secrets.refreshSecret,
-    expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+  const isPasswordMatched = await compareHash({
+    plainText: password,
+    hashedText: user.password,
   });
 
-  return { accessToken, refreshToken };
-};
+  if (!isPasswordMatched) {
+    return next(new Error('in-valid email or password', { cause: 404 }));
+  }
+
+  const credentials = await generateLoginCredentials({ user });
+  return successHandler({ res, data: { credentials } });
+});
+
+export async function verifyIdToken({ idToken } = {}) {
+  const client = new OAuth2Client();
+
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_IDs.split(','),
+  });
+  const payload = ticket.getPayload();
+  return payload;
+}
+
+export const loginWithGoogle = asyncHandler(async (req, res, next) => {
+  const { idToken } = req.body;
+  const { name, email, email_verified, picture } = await verifyIdToken({
+    idToken,
+  });
+
+  if (!email_verified) {
+    return next(new Error('Email is not verified', { cause: 400 }));
+  }
+
+  const user = await DbService.findOne({
+    model: UserModel,
+    filter: { email },
+  });
+
+  if (user) {
+    if (user.provider === providerEnum.google) {
+      const credentials = await generateLoginCredentials({ user });
+
+      return successHandler({ res, data: { credentials } });
+    }
+    return next(
+      new Error('email already exist please login with email and password', {
+        cause: 409,
+      })
+    );
+  }
+
+  const [newUser] = await DbService.create({
+    model: UserModel,
+    data: [
+      {
+        fullName: name,
+        email,
+        provider: providerEnum.google,
+        confirmEmail: Date.now(),
+        picture,
+      },
+    ],
+  });
+  const credentials = await generateLoginCredentials({ user: newUser });
+
+  return successHandler({ res, status: 201, data: { credentials } });
+});
+
+// export const loginWithGoogle = asyncHandler(async (req, res, next) => {
+//   const { idToken } = req.body;
+//   const { email, email_verified } = await verifyIdToken({
+//     idToken,
+//   });
+
+//   if (!email_verified) {
+//     return next(new Error('Email is not verified', { cause: 400 }));
+//   }
+
+//   const user = await DbService.findOne({
+//     model: UserModel,
+//     filter: { email, provider: providerEnum.google },
+//   });
+
+//   if (!user) {
+//     return next(new Error('in-valid login data or provider', { cause: 404 }));
+//   }
+
+//   const credentials = await generateLoginCredentials({ user });
+//   return successHandler({ res, data: { credentials } });
+
+// });
