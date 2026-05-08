@@ -22,6 +22,7 @@ import colors from 'colors';
 import authController from './modules/auth/auth.controller.js';
 import userController from './modules/user/user.controller.js';
 import connectDB from './DB/connection.db.js';
+import cors from 'cors';
 
 const bootstrap = async () => {
   const app = express();
@@ -31,6 +32,7 @@ const bootstrap = async () => {
   await connectDB();
 
   //========================================== 🧰 Global Middlewares ==========================================
+  app.use(cors());
   app.use(express.json());
 
   //========================================== 🌐 Routes ==========================================
