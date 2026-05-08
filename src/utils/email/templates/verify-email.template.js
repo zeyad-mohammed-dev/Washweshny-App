@@ -1,4 +1,8 @@
-export const verifyEmailTemplate = ({ firstName = 'User', otp = '12345' }) => {
+export const verifyEmailTemplate = ({ firstName = 'User', otp }) => {
+  if (otp === undefined || otp === null || otp === '') {
+    throw new Error('verifyEmailTemplate requires a non-empty otp.');
+  }
+
   return `
     <!DOCTYPE html>
     <html lang="en">
