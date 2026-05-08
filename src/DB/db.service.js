@@ -33,5 +33,5 @@ export const updateOne = async ({
 };
 
 export const deleteOne = async ({ model, filter = {} }) => {
-  return await model.findOneAndDelete(filter);
+  return await model.deleteOne(filter);
 };
