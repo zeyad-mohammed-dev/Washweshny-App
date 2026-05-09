@@ -68,6 +68,7 @@ export const decodeToken = async ({
   const user = await DbService.findOne({
     model: UserModel,
     filter: { _id: decoded.id },
+    select: 'firstName lastName email phone gender role provider confirmEmail',
   });
   if (!user) {
     return next(new Error('in-valid token', { cause: 401 }));
