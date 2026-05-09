@@ -70,7 +70,7 @@ export const decodeToken = async ({
     filter: { _id: decoded.id },
   });
   if (!user) {
-    return next(new Error('User not found', { cause: 404 }));
+    return next(new Error('in-valid token', { cause: 401 }));
   }
   return user;
 };
