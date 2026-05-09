@@ -41,7 +41,7 @@ const bootstrap = async () => {
   });
 
   app.use('/auth', authController);
-  app.use('/user', userController);
+  app.use('/users', userController);
 
   //========================================== ❌ Not Found Handler ==========================================
   app.all('{/*dummy}', (req, res) => {
