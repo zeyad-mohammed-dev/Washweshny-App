@@ -1,12 +1,11 @@
 {
   "name": "washweshny-app",
   "version": "1.0.0",
-  "main": "./src/index.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
-    "start:watch": "node --watch ./src/index.js",
-    "start:dev": "nodemon"
+    "start": "node index.js",
+    "dev": "nodemon"
   },
   "author": "",
   "license": "ISC",

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { roleEnum, UserModel } from '../../DB/models/user.model.js';
 import * as DbService from '../../DB/db.service.js';
+import { UnauthorizedError } from '../errors/errors.js';
 export const authSchemeEnum = {
   bearer: 'Bearer',
   system: 'System',
@@ -40,7 +41,7 @@ export const getSecretKey = async ({ authScheme }) => {
       secrets.refreshSecret = process.env.JWT_REFRESH_SECRET_SYSTEM;
       break;
     default:
-      throw new Error(`Unknown authScheme: ${authScheme}`);
+      throw new UnauthorizedError(`Un-Authorized`);
   }
   return secrets;
 };
@@ -53,7 +54,7 @@ export const decodeToken = async ({
   const [authScheme, token] = authorization.split(' ');
 
   if (!authScheme || !token) {
-    return next(new Error('missing authorization parts', { cause: 400 }));
+    throw new UnauthorizedError('Un-Authorized');
   }
   const secrets = await getSecretKey({ authScheme });
   const secretKey =
@@ -63,7 +64,7 @@ export const decodeToken = async ({
   const decoded = await verifyToken({ token, secretKey });
 
   if (!decoded || !decoded.id) {
-    return next(new Error('in-valid token', { cause: 401 }));
+    throw new UnauthorizedError('Un-Authorized');
   }
   const user = await DbService.findOne({
     model: UserModel,
@@ -71,7 +72,7 @@ export const decodeToken = async ({
     select: 'firstName lastName email phone gender role provider confirmEmail',
   });
   if (!user) {
-    return next(new Error('in-valid token', { cause: 401 }));
+    throw new UnauthorizedError('Un-Authorized');
   }
   return user;
 };

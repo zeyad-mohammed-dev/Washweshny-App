@@ -1,22 +1,21 @@
+import { asyncHandler } from '../../utils/errors/async-handler.js';
+import { successResponse } from '../../utils/response/response.js';
 import * as userService from './user.service.js';
-import { Router } from 'express';
-import {
-  authenticationMiddleware,
-  authorizationMiddleware,
-} from '../../middleware/auth.middleware.js';
-import { tokenTypeEnum } from '../../utils/security/token.security.js';
-import { endpoints } from './user.authorization.js';
-const router = Router();
 
-router.get(
-  '/me',
-  authenticationMiddleware(),
-  authorizationMiddleware({ allowedRoles: endpoints.getMyProfile }),
-  userService.getMyProfile
-);
-router.post(
-  '/refresh-token',
-  authenticationMiddleware({ tokenType: tokenTypeEnum.refresh }),
-  userService.refreshToken
-);
-export default router;
+export const getMyProfile = asyncHandler(async (req, res, next) => {
+  const user = await userService.getMyProfile(req.user);
+  return successResponse({
+    res,
+    message: 'Profile retrieved successfully',
+    data: { user: req.user },
+  });
+});
+
+export const refreshToken = asyncHandler(async (req, res, next) => {
+  const credentials = await userService.refreshToken(req.user);
+  return successResponse({
+    res,
+    message: 'Token refreshed successfully',
+    data: { credentials },
+  });
+});
