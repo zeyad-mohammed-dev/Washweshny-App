@@ -13,7 +13,7 @@ emailEmitter.on(
         html: verifyEmailTemplate({ firstName, otp }),
       });
     } catch (error) {
-      console.log('Error sending Email', error);
+      console.error('Error sending verification email:', error);
     }
   }
 );

@@ -1,4 +1,5 @@
-import { asyncHandler } from '../utils/response/response.js';
+import { asyncHandler } from '../utils/errors/async-handler.js';
+import { ValidationError } from '../utils/errors/errors.js';
 
 export const validationMiddleware = (schema) => {
   return asyncHandler(async (req, res, next) => {
@@ -18,11 +19,7 @@ export const validationMiddleware = (schema) => {
     }
 
     if (errors.length) {
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        errors,
-      });
+      throw new ValidationError('Validation failed', errors);
     }
     return next();
   });

@@ -1,30 +1,41 @@
-import { validationMiddleware } from '../../middleware/validation.middleware.js';
 import * as authService from './auth.service.js';
-import { Router } from 'express';
-import * as authSchemas from './auth.validation.js';
-const router = Router();
+import { successResponse } from '../../utils/response/response.js';
+import { asyncHandler } from '../../utils/errors/async-handler.js';
 
-router.post(
-  '/signup',
-  validationMiddleware(authSchemas.signupSchema),
-  authService.signup
-);
+export const signup = asyncHandler(async (req, res, next) => {
+  await authService.signup(req.body);
+  return successResponse({
+    res,
+    message: 'Signup successful. Please verify your email.',
+    statusCode: 201,
+  });
+});
 
-router.post(
-  '/login',
-  validationMiddleware(authSchemas.loginSchema),
-  authService.login
-);
+export const login = asyncHandler(async (req, res, next) => {
+  const credentials = await authService.login(req.body);
+  return successResponse({
+    res,
+    message: 'Login successful',
+    data: { credentials },
+  });
+});
 
-router.patch(
-  '/confirm-email',
-  validationMiddleware(authSchemas.confirmEmailSchema),
-  authService.confirmEmail
-);
+export const confirmEmail = asyncHandler(async (req, res, next) => {
+  await authService.confirmEmail(req.body);
+  return successResponse({
+    res,
+    message: 'Email confirmed successfully',
+  });
+});
 
-router.post(
-  '/google',
-  validationMiddleware(authSchemas.loginWithGoogleSchema),
-  authService.loginWithGoogle
-);
-export default router;
+export const LoginWithGoogle = asyncHandler(async (req, res, next) => {
+  const { credentials, statusCode } = await authService.LoginWithGoogle(
+    req.body
+  );
+  return successResponse({
+    res,
+    message: 'Login with Google successful',
+    data: { credentials },
+    statusCode,
+  });
+});

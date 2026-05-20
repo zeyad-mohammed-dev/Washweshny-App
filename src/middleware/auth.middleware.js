@@ -1,6 +1,9 @@
-import { asyncHandler } from '../utils/response/response.js';
-
+import { findById } from '../DB/db.service.js';
+import { UserModel } from '../DB/models/user.model.js';
+import { asyncHandler } from '../utils/errors/async-handler.js';
+import { UnauthorizedError } from '../utils/errors/errors.js';
 import {
+  authSchemeEnum,
   decodeToken,
   tokenTypeEnum,
 } from '../utils/security/token.security.js';
@@ -12,7 +15,7 @@ export const authenticationMiddleware = ({
     const { authorization } = req.headers;
     const user = await decodeToken({ next, authorization, tokenType });
     if (!user) {
-      return next(new Error('Un-Authorized', { cause: 401 }));
+      throw new UnauthorizedError('Un-Authorized');
     }
     req.user = user;
     return next();
@@ -23,10 +26,10 @@ export const authorizationMiddleware = ({ allowedRoles = [] }) => {
   return asyncHandler(async (req, res, next) => {
     const { user } = req;
     if (!user) {
-      return next(new Error('Un-Authorized', { cause: 401 }));
+      throw new UnauthorizedError('Un-Authorized');
     }
     if (!allowedRoles.includes(user.role)) {
-      return next(new Error('Forbidden', { cause: 403 }));
+      throw new UnauthorizedError('Forbidden');
     }
     return next();
   });

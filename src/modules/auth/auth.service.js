@@ -6,27 +6,38 @@ import {
   compareHash,
   generateHash,
 } from '../../utils/security/hash.security.js';
-import { asyncHandler, successHandler } from '../../utils/response/response.js';
+import { successResponse } from '../../utils/response/response.js';
+import { asyncHandler } from '../../utils/errors/async-handler.js';
+
+import {
+  ConflictError,
+  NotFoundError,
+  ServerError,
+  UnauthorizedError,
+  UnprocessableError,
+  ValidationError,
+} from '../../utils/errors/errors.js';
+
 import { generateLoginCredentials } from '../../utils/security/token.security.js';
 import { customAlphabet, nanoid } from 'nanoid';
 import { sendEmail } from '../../utils/email/email.service.js';
 import { verifyEmailTemplate } from '../../utils/email/templates/verify-email.template.js';
 import { emailEmitter } from '../../utils/events/email.event.js';
-import { model } from 'mongoose';
+
 export const generateOTP = customAlphabet('1234567890', 6);
 
-export const signup = asyncHandler(async (req, res, next) => {
-  const { fullName, email, password, phone } = req.body;
-
+export const signup = async ({ fullName, email, password, phone }) => {
   const checkUserExist = await DbService.findOne({
     model: UserModel,
     filter: { email },
   });
-
-  if (checkUserExist) {
-    return next(new Error('email already exist', { cause: 409 }));
+  if (checkUserExist?.provider === providerEnum.google) {
+    throw new ConflictError('Email registered with Google');
   }
-
+  
+  if (checkUserExist) {
+    throw new ConflictError('Email already registered');
+  }
   const hashPassword = await generateHash({ plainText: password });
   const otp = generateOTP();
   const hashOTP = await generateHash({ plainText: otp });
@@ -51,17 +62,10 @@ export const signup = asyncHandler(async (req, res, next) => {
     firstName: user.firstName,
     otp,
   });
-  return successHandler({
-    res,
-    status: 201,
-    message: 'User registered successfully, please check your email to confirm',
-    data: { email: user.email },
-  });
-});
 
-export const login = asyncHandler(async (req, res, next) => {
-  const { email, password } = req.body;
-
+  return;
+};
+export const login = async ({ email, password }) => {
   const user = await DbService.findOne({
     model: UserModel,
     filter: {
@@ -71,13 +75,11 @@ export const login = asyncHandler(async (req, res, next) => {
   });
 
   if (!user) {
-    return next(new Error('in-valid email or password', { cause: 404 }));
+    throw new UnauthorizedError('in-valid email or password');
   }
 
   if (!user.confirmEmail) {
-    return next(
-      new Error('Please confirm your email before logging in', { cause: 400 })
-    );
+    throw new UnauthorizedError('in-valid email or password');
   }
 
   const isPasswordMatched = await compareHash({
@@ -86,16 +88,14 @@ export const login = asyncHandler(async (req, res, next) => {
   });
 
   if (!isPasswordMatched) {
-    return next(new Error('in-valid email or password', { cause: 404 }));
+    throw new UnauthorizedError('in-valid email or password');
   }
 
   const credentials = await generateLoginCredentials({ user });
-  return successHandler({ res, data: { credentials } });
-});
+  return credentials;
+};
 
-export const confirmEmail = asyncHandler(async (req, res, next) => {
-  const { email, otp } = req.body;
-
+export const confirmEmail = async ({ email, otp }) => {
   const user = await DbService.findOne({
     model: UserModel,
     filter: {
@@ -105,10 +105,9 @@ export const confirmEmail = asyncHandler(async (req, res, next) => {
       confirmEmail: { $exists: false },
     },
   });
+
   if (!user) {
-    return next(
-      new Error('user not found or email already confirmed', { cause: 404 })
-    );
+    throw new NotFoundError('User not found or email already confirmed');
   }
 
   const isOTPMatch = await compareHash({
@@ -116,14 +115,12 @@ export const confirmEmail = asyncHandler(async (req, res, next) => {
     hashedText: user.confirmEmailOtp,
   });
   if (!isOTPMatch) {
-    return next(new Error('Invalid OTP', { cause: 400 }));
+    throw new ValidationError('Invalid OTP');
+  }
+  if (user.confirmEmailOtpExpiresAt < Date.now()) {
+    throw new UnprocessableError('OTP expired , please send it again');
   }
 
-  if (user.confirmEmailOtpExpiresAt < Date.now()) {
-    return next(
-      new Error('OTP expired , please send it again', { cause: 400 })
-    );
-  }
   const updatedUser = await DbService.updateOne({
     model: UserModel,
     filter: { _id: user._id },
@@ -133,27 +130,19 @@ export const confirmEmail = asyncHandler(async (req, res, next) => {
       $inc: { __v: 1 },
     },
   });
-
   if (!updatedUser.modifiedCount) {
-    return next(
-      new Error('Failed to confirm email, please try again', { cause: 500 })
-    );
+    throw new ServerError('Failed to confirm email, please try again');
   }
-  return successHandler({
-    res,
-    data: { message: 'Email confirmed successfully' },
-  });
-});
+
+  return;
+};
 
 export async function verifyIdToken({ idToken } = {}) {
   const client = new OAuth2Client();
   const googleClientIdsEnv = process.env.GOOGLE_CLIENT_IDs;
 
   if (!googleClientIdsEnv || !googleClientIdsEnv.trim()) {
-    throw new Error(
-      'No Google Client IDs provides on the env please check it again',
-      { cause: 404 }
-    );
+    throw new ServerError('Website not configured for Google Sign-In');
   }
 
   const googleClientIds = googleClientIdsEnv
@@ -162,10 +151,7 @@ export async function verifyIdToken({ idToken } = {}) {
     .filter(Boolean);
 
   if (googleClientIds.length === 0) {
-    throw new Error(
-      'No Google Client IDs provides on the env please check it again',
-      { cause: 404 }
-    );
+    throw new ServerError('Website not configured for Google Sign-In');
   }
 
   const ticket = await client.verifyIdToken({
@@ -176,17 +162,15 @@ export async function verifyIdToken({ idToken } = {}) {
   return payload;
 }
 
-export const loginWithGoogle = asyncHandler(async (req, res, next) => {
-  const { idToken } = req.body;
+export const LoginWithGoogle = async ({ idToken }) => {
   const { name, email, email_verified, picture } =
     (await verifyIdToken({
       idToken,
     })) || {};
 
   if (!email_verified) {
-    return next(new Error('Email is not verified', { cause: 400 }));
+    throw new UnauthorizedError('Email is not verified');
   }
-
   const user = await DbService.findOne({
     model: UserModel,
     filter: { email },
@@ -196,12 +180,10 @@ export const loginWithGoogle = asyncHandler(async (req, res, next) => {
     if (user.provider === providerEnum.google) {
       const credentials = await generateLoginCredentials({ user });
 
-      return successHandler({ res, data: { credentials } });
+      return { credentials, statusCode: 200 };
     }
-    return next(
-      new Error('email already exist please login with email and password', {
-        cause: 409,
-      })
+    throw new ConflictError(
+      'Email already exists. Please login with email and password.'
     );
   }
 
@@ -219,29 +201,5 @@ export const loginWithGoogle = asyncHandler(async (req, res, next) => {
   });
   const credentials = await generateLoginCredentials({ user: newUser });
 
-  return successHandler({ res, status: 201, data: { credentials } });
-});
-
-// export const loginWithGoogle = asyncHandler(async (req, res, next) => {
-//   const { idToken } = req.body;
-//   const { email, email_verified } = await verifyIdToken({
-//     idToken,
-//   });
-
-//   if (!email_verified) {
-//     return next(new Error('Email is not verified', { cause: 400 }));
-//   }
-
-//   const user = await DbService.findOne({
-//     model: UserModel,
-//     filter: { email, provider: providerEnum.google },
-//   });
-
-//   if (!user) {
-//     return next(new Error('in-valid login data or provider', { cause: 404 }));
-//   }
-
-//   const credentials = await generateLoginCredentials({ user });
-//   return successHandler({ res, data: { credentials } });
-
-// });
+  return { credentials, statusCode: 201 };
+};
