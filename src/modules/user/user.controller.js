@@ -20,6 +20,15 @@ export const updateMyProfile = asyncHandler(async (req, res, next) => {
   });
 });
 
+export const updatePassword = asyncHandler(async (req, res, next) => {
+  const user = await userService.updatePassword(req);
+  return successResponse({
+    res,
+    message: 'password updated successfully',
+    data: { user },
+  });
+});
+
 export const getProfileById = asyncHandler(async (req, res, next) => {
   const user = await userService.getProfileById(req.params.userId);
   return successResponse({

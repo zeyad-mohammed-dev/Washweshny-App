@@ -68,6 +68,10 @@ const userSchema = new mongoose.Schema(
     confirmEmail: Date,
     confirmEmailOtp: String,
     confirmEmailOtpExpiresAt: Date,
+
+    forgetPasswordOtp: string,
+    forgetPasswordOtpExpiresAt: Date,
+
     picture: String,
 
     deletedAt: Date,

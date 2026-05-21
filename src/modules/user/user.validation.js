@@ -32,6 +32,23 @@ export const updateMyProfileSchema = {
   query: joi.object({}).options({ abortEarly: false }),
 };
 
+export const updatePasswordSchema = {
+  body: joi
+    .object()
+    .keys({
+      oldPassword: generalFields.password.required(),
+      newPassword: generalFields.password
+        .not(joi.ref('oldPassword'))
+        .required(),
+      confirmPassword: generalFields.confirmPassword.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+
+  params: joi.object({}).options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+};
+
 export const freezeAccountSchema = {
   params: joi
     .object()

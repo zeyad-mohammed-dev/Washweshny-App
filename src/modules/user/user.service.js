@@ -3,6 +3,10 @@ import { generateLoginCredentials } from '../../utils/security/token.security.js
 import * as DbService from '../../db/db.service.js';
 import { roleEnum, UserModel } from '../../DB/models/user.model.js';
 import { ForbiddenError, NotFoundError } from '../../utils/errors/errors.js';
+import {
+  compareHash,
+  generateHash,
+} from '../../utils/security/hash.security.js';
 
 export const getMyProfile = async (user) => {
   user.phone = await decrypt(user.phone);
@@ -19,7 +23,34 @@ export const updateMyProfile = async ({ user, body }) => {
     data: body,
     select: 'firstName lastName email gender phone',
   });
+
+  if (!updatedUser) {
+    throw new NotFoundError('user not exist or something wrong happen');
+  }
   return updatedUser;
+};
+export const updatePassword = async ({ user, body }) => {
+  const { oldPassword, newPassword } = body;
+
+  const isPasswordValid = await user.compareHash({
+    plainText: oldPassword,
+    hashedText: user.password,
+  });
+  if (!isPasswordValid) {
+    throw new ForbiddenError('Invalid old password');
+  }
+
+  const updatedUser = await DbService.updateOne({
+    model: UserModel,
+    filter: { _id: user._id },
+    data: { password: newPassword },
+  });
+
+  if (!updatedUser.modifiedCount) {
+    throw new NotFoundError('user not exist or something wrong happen');
+  }
+
+  return;
 };
 
 export const getProfileById = async (userId) => {
@@ -105,9 +136,7 @@ export const deleteAccount = async (req) => {
   });
 
   if (user.deletedCount === 0) {
-    throw new NotFoundError(
-      'user not exist or not freezed '
-    );
+    throw new NotFoundError('user not exist or not freezed ');
   }
 
   return;

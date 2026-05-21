@@ -74,6 +74,7 @@ export const signup = async ({
 
   return;
 };
+
 export const login = async ({ email, password }) => {
   const user = await DbService.findOne({
     model: UserModel,
@@ -141,6 +142,115 @@ export const confirmEmail = async ({ email, otp }) => {
   });
   if (!updatedUser.modifiedCount) {
     throw new ServerError('Failed to confirm email, please try again');
+  }
+
+  return;
+};
+
+export const requestForgotPasswordOTP = async ({ email }) => {
+  const user = await DbService.findOne({
+    model: UserModel,
+    filter: {
+      email,
+      confirmEmail: { $exists: true },
+      deletedAt: { $exists: false },
+      provider: providerEnum.system,
+    },
+  });
+  if (!user) {
+    throw new NotFoundError('User not exist or not confirmed');
+  }
+
+  const otp = generateOTP();
+  const hashOTP = await generateHash({ plainText: otp });
+  const forgetPasswordOtpExpiresAt = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
+
+  user.forgetPasswordOtp = hashedOTP;
+  user.forgetPasswordOtpExpiresAt = forgetPasswordOtpExpiresAt;
+
+  await user.save();
+
+  emailEmitter.emit('sendPasswordResetEmail', {
+    to: user.email,
+    firstName: user.firstName,
+    otp,
+  });
+
+  return;
+};
+
+export const confirmForgotPasswordOTP = async ({ email, otp }) => {
+  const user = await DbService.findOne({
+    model: UserModel,
+    filter: {
+      email,
+      forgetPasswordOtp: { $exists: true },
+      forgetPasswordOtpExpiresAt: { $exists: true },
+      confirmEmail: { $exists: true },
+      deletedAt: { $exists: false },
+      provider: providerEnum.system,
+    },
+  });
+
+  if (!user) {
+    throw new NotFoundError('User not found or email not confirmed');
+  }
+
+  const isOTPMatch = await compareHash({
+    plainText: otp,
+    hashedText: user.forgetPasswordOtp,
+  });
+  if (!isOTPMatch) {
+    throw new ValidationError('Invalid OTP');
+  }
+  if (user.confirmEmailOtpExpiresAt < Date.now()) {
+    throw new UnprocessableError('OTP expired , please send it again');
+  }
+
+  return;
+};
+
+export const resetPassword = async ({ email, otp, password }) => {
+  const user = await DbService.findOne({
+    model: UserModel,
+    filter: {
+      email,
+      forgetPasswordOtp: { $exists: true },
+      forgetPasswordOtpExpiresAt: { $exists: true },
+      confirmEmail: { $exists: true },
+      deletedAt: { $exists: false },
+      provider: providerEnum.system,
+    },
+  });
+
+  if (!user) {
+    throw new NotFoundError('User not found or email not confirmed');
+  }
+
+  const isOTPMatch = await compareHash({
+    plainText: otp,
+    hashedText: user.forgetPasswordOtp,
+  });
+  if (!isOTPMatch) {
+    throw new ValidationError('Invalid OTP');
+  }
+  if (user.confirmEmailOtpExpiresAt < Date.now()) {
+    throw new UnprocessableError('OTP expired , please send it again');
+  }
+
+  const hashPassword = await generateHash({ plainText: password });
+
+  const updatedUser = await DbService.updateOne({
+    model: UserModel,
+    filter: { email },
+    update: {
+      password: hashPassword,
+      $unset: { forgetPasswordOtp: 1, forgetPasswordOtpExpiresAt: 1 },
+      $inc: { __v: 1 },
+    },
+  });
+  if (!updatedUser.modifiedCount) {
+    throw new ServerError('Failed to reset password, please try again');
   }
 
   return;

@@ -30,6 +30,13 @@ router.patch(
   userController.updateMyProfile
 );
 
+router.patch(
+  '/me/password',
+  authenticationMiddleware(),
+  validationMiddleware(userSchemas.updatePasswordSchema),
+  userController.updatePassword
+);
+
 router.delete(
   '{/:userId}/freeze-account',
   authenticationMiddleware(),

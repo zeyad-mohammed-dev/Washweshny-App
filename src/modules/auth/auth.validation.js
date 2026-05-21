@@ -55,3 +55,38 @@ export const loginWithGoogleSchema = {
   query: joi.object({}).options({ abortEarly: false }),
   params: joi.object({}).options({ abortEarly: false }),
 };
+
+export const requestForgotPasswordOTPSchema = {
+  body: joi
+    .object()
+    .keys({
+      email: generalFields.email.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
+};
+
+export const confirmForgotPasswordOTPSchema = {
+  body: requestForgotPasswordOTPSchema.body
+    .append({
+      otp: generalFields.otp.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
+};
+
+export const resetPasswordSchema = {
+  body: confirmForgotPasswordOTPSchema.body
+    .append({
+      password: generalFields.password.required(),
+      confirmPassword: generalFields.confirmPassword.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
+};
