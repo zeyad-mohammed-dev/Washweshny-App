@@ -13,6 +13,7 @@ export const loginSchema = {
     .required()
     .options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
 };
 
 export const signupSchema = {
@@ -25,6 +26,7 @@ export const signupSchema = {
     .required()
     .options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
 };
 
 export const confirmEmailSchema = {
@@ -37,6 +39,7 @@ export const confirmEmailSchema = {
     .required()
     .options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
 };
 
 export const loginWithGoogleSchema = {
@@ -48,4 +51,5 @@ export const loginWithGoogleSchema = {
     .required()
     .options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
 };

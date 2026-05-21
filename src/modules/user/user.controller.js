@@ -11,6 +11,15 @@ export const getMyProfile = asyncHandler(async (req, res, next) => {
   });
 });
 
+export const getProfileById = asyncHandler(async (req, res, next) => {
+  const user = await userService.getProfileById(req.params.userId);
+  return successResponse({
+    res,
+    message: 'Profile retrieved successfully',
+    data: { user: req.user },
+  });
+});
+
 export const refreshToken = asyncHandler(async (req, res, next) => {
   const credentials = await userService.refreshToken(req.user);
   return successResponse({
