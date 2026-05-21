@@ -26,7 +26,14 @@ import { emailEmitter } from '../../utils/events/email.event.js';
 
 export const generateOTP = customAlphabet('1234567890', 6);
 
-export const signup = async ({ fullName, email, password, phone }) => {
+export const signup = async ({
+  fullName,
+  email,
+  password,
+  age,
+  gender,
+  phone,
+}) => {
   const checkUserExist = await DbService.findOne({
     model: UserModel,
     filter: { email },
@@ -34,7 +41,7 @@ export const signup = async ({ fullName, email, password, phone }) => {
   if (checkUserExist?.provider === providerEnum.google) {
     throw new ConflictError('Email registered with Google');
   }
-  
+
   if (checkUserExist) {
     throw new ConflictError('Email already registered');
   }
@@ -48,6 +55,8 @@ export const signup = async ({ fullName, email, password, phone }) => {
     data: [
       {
         fullName,
+        age,
+        gender,
         email,
         password: hashPassword,
         phone: await encrypt(phone),

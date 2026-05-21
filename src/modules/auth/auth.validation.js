@@ -21,6 +21,8 @@ export const signupSchema = {
     .append({
       fullName: generalFields.fullName.required(),
       confirmPassword: generalFields.confirmPassword.required(),
+      age: generalFields.age.required(),
+      gender: generalFields.gender.required(),
       phone: generalFields.phone.required(),
     })
     .required()

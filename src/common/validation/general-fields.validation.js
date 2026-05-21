@@ -1,10 +1,14 @@
 import joi from 'joi';
 import { Types } from 'mongoose';
+import { genderEnum } from '../../DB/models/user.model.js';
 
 export const generalFields = {
   fullName: joi
     .string()
     .pattern(new RegExp(/^[A-Z][a-z]{1,19}\s{1}[A-Z][a-z]{1,19}$/)),
+  firstName: joi.string().pattern(new RegExp(/^[A-Z][a-z]{1,19}$/)),
+  lastName: joi.string().pattern(new RegExp(/^[A-Z][a-z]{1,19}$/)),
+
   email: joi.string().email({
     minDomainSegments: 2,
     maxDomainSegments: 3,
@@ -24,4 +28,7 @@ export const generalFields = {
   id: joi.string().custom((value, helpers) => {
     return Types.ObjectId.isValid(value) || helpers.message('in-valid Id');
   }, 'mongoDB Id Validation'),
+
+  gender: joi.string().valid(...Object.values(genderEnum)),
+  age: joi.number().min(12).max(100),
 };

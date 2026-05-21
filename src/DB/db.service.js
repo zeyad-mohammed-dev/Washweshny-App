@@ -27,9 +27,23 @@ export const updateOne = async ({
   model,
   filter = {},
   update = {},
-  options = {},
+  options = { runValidators: true },
 }) => {
   return await model.updateOne(filter, update, options);
+};
+
+export const findOneAndUpdate = async ({
+  model,
+  filter = {},
+  select = '',
+  populate = [],
+  data = {},
+  options = { runValidators: true, returnDocument: 'after' },
+}) => {
+  return await model
+    .findOneAndUpdate(filter, {...data, $inc: { __v: 1 } }, options)
+    .select(select)
+    .populate(populate);
 };
 
 export const deleteOne = async ({ model, filter = {} }) => {

@@ -23,6 +23,28 @@ router.get(
   userController.getProfileById
 );
 
+router.patch(
+  '/me',
+  authenticationMiddleware(),
+  validationMiddleware(userSchemas.updateMyProfileSchema),
+  userController.updateMyProfile
+);
+
+router.delete(
+  '{/:userId}/freeze-account',
+  authenticationMiddleware(),
+  validationMiddleware(userSchemas.freezeAccountSchema),
+  userController.freezeAccount
+);
+
+router.patch(
+  '/:userId/restore-account',
+  authenticationMiddleware(),
+  authorizationMiddleware({ allowedRoles: endpoints.restoreAccount }),
+  validationMiddleware(userSchemas.restoreAccountSchema),
+  userController.restoreAccount
+);
+
 router.post(
   '/refresh-token',
   authenticationMiddleware({ tokenType: tokenTypeEnum.refresh }),
