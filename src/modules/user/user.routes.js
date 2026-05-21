@@ -45,6 +45,14 @@ router.patch(
   userController.restoreAccount
 );
 
+router.delete(
+  '/:userId',
+  authenticationMiddleware(),
+  authorizationMiddleware({ allowedRoles: endpoints.deleteAccount }),
+  validationMiddleware(userSchemas.deleteAccountSchema),
+  userController.deleteAccount
+);
+
 router.post(
   '/refresh-token',
   authenticationMiddleware({ tokenType: tokenTypeEnum.refresh }),

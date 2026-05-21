@@ -5,4 +5,5 @@ export const endpoints = {
   updateUser: [roleEnum.admin, roleEnum.user],
   deleteUser: [roleEnum.admin],
   restoreAccount: [roleEnum.admin],
+  deleteAccount: [roleEnum.admin],
 };

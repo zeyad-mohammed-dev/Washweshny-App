@@ -57,3 +57,16 @@ export const restoreAccountSchema = {
   body: joi.object({}).options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
 };
+
+export const deleteAccountSchema = {
+  params: joi
+    .object()
+    .keys({
+      userId: generalFields.id.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+
+  body: joi.object({}).options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+};

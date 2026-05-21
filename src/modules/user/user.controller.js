@@ -45,6 +45,14 @@ export const restoreAccount = asyncHandler(async (req, res, next) => {
   });
 });
 
+export const deleteAccount = asyncHandler(async (req, res, next) => {
+  await userService.deleteAccount(req);
+  return successResponse({
+    res,
+    message: 'Account deleted successfully',
+  });
+});
+
 export const refreshToken = asyncHandler(async (req, res, next) => {
   const credentials = await userService.refreshToken(req.user);
   return successResponse({

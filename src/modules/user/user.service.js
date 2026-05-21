@@ -92,3 +92,23 @@ export const restoreAccount = async (req) => {
 
   return;
 };
+
+export const deleteAccount = async (req) => {
+  const userId = req.params.userId;
+
+  const user = await DbService.deleteOne({
+    model: UserModel,
+    filter: {
+      _id: userId,
+      deletedAt: { $exists: true },
+    },
+  });
+
+  if (user.deletedCount === 0) {
+    throw new NotFoundError(
+      'user not exist or not freezed '
+    );
+  }
+
+  return;
+};
