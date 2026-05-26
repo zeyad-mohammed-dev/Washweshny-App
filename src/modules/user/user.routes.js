@@ -23,6 +23,19 @@ router.get(
   userController.getProfileById
 );
 
+router.post(
+  '/refresh-token',
+  authenticationMiddleware({ tokenType: tokenTypeEnum.refresh }),
+  userController.refreshToken
+);
+
+router.post(
+  '/me/logout',
+  authenticationMiddleware(),
+  validationMiddleware(userSchemas.logoutSchema),
+  userController.logout
+);
+
 router.patch(
   '/me',
   authenticationMiddleware(),
@@ -37,13 +50,6 @@ router.patch(
   userController.updatePassword
 );
 
-router.delete(
-  '{/:userId}/freeze-account',
-  authenticationMiddleware(),
-  validationMiddleware(userSchemas.freezeAccountSchema),
-  userController.freezeAccount
-);
-
 router.patch(
   '/:userId/restore-account',
   authenticationMiddleware(),
@@ -53,17 +59,18 @@ router.patch(
 );
 
 router.delete(
+  '{/:userId}/freeze-account',
+  authenticationMiddleware(),
+  validationMiddleware(userSchemas.freezeAccountSchema),
+  userController.freezeAccount
+);
+
+router.delete(
   '/:userId',
   authenticationMiddleware(),
   authorizationMiddleware({ allowedRoles: endpoints.deleteAccount }),
   validationMiddleware(userSchemas.deleteAccountSchema),
   userController.deleteAccount
-);
-
-router.post(
-  '/refresh-token',
-  authenticationMiddleware({ tokenType: tokenTypeEnum.refresh }),
-  userController.refreshToken
 );
 
 export default router;

@@ -1,6 +1,20 @@
 import joi from 'joi';
 import { Types } from 'mongoose';
 import { generalFields } from '../../common/validation/general-fields.validation.js';
+import { logoutEnum } from '../../utils/security/token.security.js';
+
+export const logoutSchema = {
+  body: joi
+    .object()
+    .keys({
+      flag: joi.string().valid(...Object.values(logoutEnum)),
+    })
+    .required()
+    .options({ abortEarly: false }),
+
+  params: joi.object({}).options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+};
 
 export const getProfileByIdSchema = {
   params: joi
@@ -33,14 +47,13 @@ export const updateMyProfileSchema = {
 };
 
 export const updatePasswordSchema = {
-  body: joi
-    .object()
-    .keys({
+  body: logoutSchema.body
+    .append({
       oldPassword: generalFields.password.required(),
       newPassword: generalFields.password
         .not(joi.ref('oldPassword'))
         .required(),
-      confirmPassword: generalFields.confirmPassword.required(),
+      confirmPassword: joi.string().valid(joi.ref('newPassword')).required(),
     })
     .required()
     .options({ abortEarly: false }),

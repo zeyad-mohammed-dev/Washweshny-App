@@ -13,11 +13,16 @@ export const authenticationMiddleware = ({
 } = {}) => {
   return asyncHandler(async (req, res, next) => {
     const { authorization } = req.headers;
-    const user = await decodeToken({ next, authorization, tokenType });
+    const { user, decoded } = await decodeToken({
+      next,
+      authorization,
+      tokenType,
+    });
     if (!user) {
       throw new UnauthorizedError('Un-Authorized');
     }
     req.user = user;
+    req.decoded = decoded;
     return next();
   });
 };

@@ -69,7 +69,13 @@ const userSchema = new mongoose.Schema(
     confirmEmailOtp: String,
     confirmEmailOtpExpiresAt: Date,
 
-    forgetPasswordOtp: string,
+    OtpCounter: {
+      type: Number,
+      default: 1,
+    },
+    freezedAt: Date,
+
+    forgetPasswordOtp: String,
     forgetPasswordOtpExpiresAt: Date,
 
     picture: String,
@@ -79,6 +85,8 @@ const userSchema = new mongoose.Schema(
 
     restoredAt: Date,
     restoredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+    changeCredentialsTime: Date,
   },
   {
     timestamps: true,

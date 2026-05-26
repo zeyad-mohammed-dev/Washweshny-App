@@ -44,6 +44,18 @@ export const confirmEmailSchema = {
   params: joi.object({}).options({ abortEarly: false }),
 };
 
+export const requestConfirmEmailOTPSchema = {
+  body: joi
+    .object()
+    .keys({
+      email: generalFields.email.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
+};
+
 export const loginWithGoogleSchema = {
   body: joi
     .object()

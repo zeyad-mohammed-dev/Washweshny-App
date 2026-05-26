@@ -29,6 +29,12 @@ router.patch(
 );
 
 router.patch(
+  '/confirm-email/request-otp',
+  validationMiddleware(authSchemas.requestConfirmEmailOTPSchema),
+  authController.requestConfirmEmailOTP
+);
+
+router.patch(
   '/forgot-password/request-otp',
   validationMiddleware(authSchemas.requestForgotPasswordOTPSchema),
   authController.requestForgotPasswordOTP

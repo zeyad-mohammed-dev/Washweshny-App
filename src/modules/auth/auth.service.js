@@ -62,6 +62,7 @@ export const signup = async ({
         phone: await encrypt(phone),
         confirmEmailOtp: hashOTP,
         confirmEmailOtpExpiresAt,
+        OtpCounter: 1,
       },
     ],
   });
@@ -89,6 +90,10 @@ export const login = async ({ email, password }) => {
   }
 
   if (!user.confirmEmail) {
+    throw new UnauthorizedError('in-valid email or password');
+  }
+
+   if (user.deletedAt) {
     throw new UnauthorizedError('in-valid email or password');
   }
 
@@ -136,13 +141,103 @@ export const confirmEmail = async ({ email, otp }) => {
     filter: { _id: user._id },
     update: {
       confirmEmail: Date.now(),
-      $unset: { confirmEmailOtp: 1, confirmEmailOtpExpiresAt: 1 },
+      $unset: {
+        confirmEmailOtp: 1,
+        confirmEmailOtpExpiresAt: 1,
+        OtpCounter: 1,
+      },
       $inc: { __v: 1 },
     },
   });
   if (!updatedUser.modifiedCount) {
     throw new ServerError('Failed to confirm email, please try again');
   }
+
+  return;
+};
+
+export const requestConfirmEmailOTP = async ({ email }) => {
+  const user = await DbService.findOne({
+    model: UserModel,
+    filter: {
+      email,
+      confirmEmail: { $exists: false },
+      confirmEmailOtp: { $exists: true },
+      confirmEmailOtpExpiresAt: { $exists: true },
+      deletedAt: { $exists: false },
+      provider: providerEnum.system,
+    },
+  });
+  if (!user) {
+    throw new NotFoundError('User not exist or already confirmed');
+  }
+
+  if (user.confirmEmailOtpExpiresAt > Date.now()) {
+    throw new UnprocessableError(
+      'OTP not expired yet, please use the previous OTP or wait until it expires to request new one'
+    );
+  }
+
+  if (user.OtpCounter && user.OtpCounter % 3 == 0 && !user.freezedAt) {
+    user.freezedAt = Date.now() + 10 * 60 * 1000;
+    user.__v += 1;
+    await user.save();
+    throw new UnprocessableError(
+      'You have requested OTP many times, your account is freezed for 10 minutes'
+    );
+  } else {
+    user.OtpCounter += 1;
+  }
+  const otp = generateOTP();
+
+  if (user.freezedAt && user.freezedAt < Date.now()) {
+    const updatedUser = await DbService.findOneAndUpdate({
+      model: UserModel,
+      filter: {
+        email,
+        confirmEmail: { $exists: false },
+        confirmEmailOtp: { $exists: true },
+        confirmEmailOtpExpiresAt: { $exists: true },
+        deletedAt: { $exists: false },
+        provider: providerEnum.system,
+        freezedAt: { $exists: true },
+      },
+      data: {
+        $unset: { freezedAt: 1 },
+        OtpCounter: user.OtpCounter,
+        confirmEmailOtp: await generateHash({ plainText: otp }),
+        confirmEmailOtpExpiresAt: Date.now() + 10 * 60 * 1000,
+      },
+    });
+    if (!updatedUser) {
+      throw new ServerError('Failed to request OTP, please try again');
+    }
+
+    emailEmitter.emit('sendVerificationEmail', {
+      to: user.email,
+      firstName: user.firstName,
+      otp,
+    });
+    return;
+  } else if (user.freezedAt) {
+    throw new UnprocessableError(
+      `Your account is freezed, please wait ${Math.floor((user.freezedAt - Date.now()) / 60000)} minutes before requesting new OTP`
+    );
+  }
+
+  const hashOTP = await generateHash({ plainText: otp });
+  const confirmEmailOtpExpiresAt = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
+
+  user.confirmEmailOtp = hashOTP;
+  user.confirmEmailOtpExpiresAt = confirmEmailOtpExpiresAt;
+
+  await user.save();
+
+  emailEmitter.emit('sendVerificationEmail', {
+    to: user.email,
+    firstName: user.firstName,
+    otp,
+  });
 
   return;
 };
@@ -245,6 +340,7 @@ export const resetPassword = async ({ email, otp, password }) => {
     filter: { email },
     update: {
       password: hashPassword,
+      changeCredentialsTime: Date.now(),
       $unset: { forgetPasswordOtp: 1, forgetPasswordOtpExpiresAt: 1 },
       $inc: { __v: 1 },
     },
