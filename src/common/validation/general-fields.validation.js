@@ -1,7 +1,14 @@
 import joi from 'joi';
+import { Types } from 'mongoose';
+import { genderEnum } from '../../DB/models/user.model.js';
 
 export const generalFields = {
-  fullName: joi.string().min(3).max(30),
+  fullName: joi
+    .string()
+    .pattern(new RegExp(/^[A-Z][a-z]{1,19}\s{1}[A-Z][a-z]{1,19}$/)),
+  firstName: joi.string().pattern(new RegExp(/^[A-Z][a-z]{1,19}$/)),
+  lastName: joi.string().pattern(new RegExp(/^[A-Z][a-z]{1,19}$/)),
+
   email: joi.string().email({
     minDomainSegments: 2,
     maxDomainSegments: 3,
@@ -9,8 +16,19 @@ export const generalFields = {
   }),
   password: joi
     .string()
-    .pattern(new RegExp(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)),
+    .pattern(
+      new RegExp(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+=\-])[A-Za-z\d@$!%*?&#^()_+=\-]{8,30}$/
+      )
+    ),
   confirmPassword: joi.string().valid(joi.ref('password')),
   phone: joi.string().pattern(new RegExp(/^(002|\+2)?01[0125][0-9]{8}$/)),
   otp: joi.string().pattern(new RegExp(/^\d{6}$/)),
+
+  id: joi.string().custom((value, helpers) => {
+    return Types.ObjectId.isValid(value) || helpers.message('in-valid Id');
+  }, 'mongoDB Id Validation'),
+
+  gender: joi.string().valid(...Object.values(genderEnum)),
+  age: joi.number().min(12).max(100),
 };

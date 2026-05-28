@@ -28,6 +28,38 @@ export const confirmEmail = asyncHandler(async (req, res, next) => {
   });
 });
 
+export const requestConfirmEmailOTP = asyncHandler(async (req, res, next) => {
+  await authService.requestConfirmEmailOTP(req.body);
+  return successResponse({
+    res,
+    message: 'OTP Sended. Please verify your email.',
+  });
+});
+
+export const requestForgotPasswordOTP = asyncHandler(async (req, res, next) => {
+  await authService.requestForgotPasswordOTP(req.body);
+  return successResponse({
+    res,
+    message: 'OTP Sended. Please verify your email.',
+  });
+});
+
+export const confirmForgotPasswordOTP = asyncHandler(async (req, res, next) => {
+  await authService.confirmForgotPasswordOTP(req.body);
+  return successResponse({
+    res,
+    message: 'Email confirmed successfully',
+  });
+});
+
+export const resetPassword = asyncHandler(async (req, res, next) => {
+  await authService.resetPassword(req.body);
+  return successResponse({
+    res,
+    message: 'Password reset successfully',
+  });
+});
+
 export const LoginWithGoogle = asyncHandler(async (req, res, next) => {
   const { credentials, statusCode } = await authService.LoginWithGoogle(
     req.body
