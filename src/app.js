@@ -1,6 +1,6 @@
 //========================================== 🌍 Environment Configuration ==========================================
 import * as dotenv from 'dotenv';
-import path from 'path';
+import path from 'node:path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -38,6 +38,7 @@ const bootstrap = async () => {
 
   //========================================== 🧰 Global Middlewares ==========================================
   app.use(cors());
+  app.use('/uploads', express.static(path.resolve('./uploads')));
   app.use(express.json());
 
   //========================================== 🌐 Routes ==========================================

@@ -93,7 +93,7 @@ export const login = async ({ email, password }) => {
     throw new UnauthorizedError('in-valid email or password');
   }
 
-   if (user.deletedAt) {
+  if (user.deletedAt) {
     throw new UnauthorizedError('in-valid email or password');
   }
 
@@ -410,7 +410,7 @@ export const LoginWithGoogle = async ({ idToken }) => {
         email,
         provider: providerEnum.google,
         confirmEmail: Date.now(),
-        picture,
+        profileImage: picture,
       },
     ],
   });
