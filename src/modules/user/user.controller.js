@@ -47,11 +47,27 @@ export const updateMyProfile = asyncHandler(async (req, res, next) => {
   });
 });
 
+export const uploadProfileImage = asyncHandler(async (req, res, next) => {
+  await userService.uploadProfileImage(req);
+  return successResponse({
+    res,
+    message: 'Profile image uploaded successfully',
+  });
+});
+
+export const uploadCoverImages = asyncHandler(async (req, res, next) => {
+  await userService.uploadCoverImages(req);
+  return successResponse({
+    res,
+    message: 'Cover images uploaded successfully',
+  });
+});
+
 export const updatePassword = asyncHandler(async (req, res, next) => {
   await userService.updatePassword(req);
   return successResponse({
     res,
-    message: 'password updated successfully',
+    message: 'Password updated successfully',
   });
 });
 

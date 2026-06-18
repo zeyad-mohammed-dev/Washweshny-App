@@ -78,7 +78,8 @@ const userSchema = new mongoose.Schema(
     forgetPasswordOtp: String,
     forgetPasswordOtpExpiresAt: Date,
 
-    picture: String,
+    profileImage: { public_id: String, secure_url: String },
+    coverImages: [{ public_id: String, secure_url: String }],
 
     deletedAt: Date,
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

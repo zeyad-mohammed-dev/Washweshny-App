@@ -2,6 +2,7 @@ import joi from 'joi';
 import { Types } from 'mongoose';
 import { generalFields } from '../../common/validation/general-fields.validation.js';
 import { logoutEnum } from '../../utils/security/token.security.js';
+import { allowedMimeTypes } from '../../utils/upload/cloud.multer.js';
 
 export const logoutSchema = {
   body: joi
@@ -42,6 +43,48 @@ export const updateMyProfileSchema = {
     .required()
     .options({ abortEarly: false }),
 
+  params: joi.object({}).options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+};
+
+export const uploadProfileImageSchema = {
+  file: joi
+    .object()
+    .keys({
+      ...generalFields.file.BaseFields,
+      fieldname: generalFields.file.FilterFields.fieldname.valid('image'),
+      mimetype: generalFields.file.FilterFields.mimetype.valid(
+        ...Object.values(allowedMimeTypes.image)
+      ),
+    })
+    .required()
+    .options({ abortEarly: false }),
+
+  body: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+};
+
+export const uploadCoverImagesSchema = {
+  files: joi
+    .array()
+    .items(
+      joi
+        .object()
+        .keys({
+          ...generalFields.file.BaseFields,
+          fieldname: generalFields.file.FilterFields.fieldname.valid('images'),
+          mimetype: generalFields.file.FilterFields.mimetype.valid(
+            ...Object.values(allowedMimeTypes.image)
+          ),
+        })
+        .required()
+    )
+    .min(1)
+    .max(2)
+    .required()
+    .options({ abortEarly: false }),
+  body: joi.object({}).options({ abortEarly: false }),
   params: joi.object({}).options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
 };

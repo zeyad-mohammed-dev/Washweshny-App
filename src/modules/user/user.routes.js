@@ -8,6 +8,11 @@ import { tokenTypeEnum } from '../../utils/security/token.security.js';
 import { endpoints } from './user.authorization.js';
 import { validationMiddleware } from '../../middleware/validation.middleware.js';
 import * as userSchemas from './user.validation.js';
+
+import {
+  allowedMimeTypes,
+  cloudMulter,
+} from '../../utils/upload/cloud.multer.js';
 const router = Router();
 
 router.get(
@@ -41,6 +46,27 @@ router.patch(
   authenticationMiddleware(),
   validationMiddleware(userSchemas.updateMyProfileSchema),
   userController.updateMyProfile
+);
+
+router.patch(
+  '/me/profile-image',
+  authenticationMiddleware(),
+  cloudMulter({
+    allowedTypes: allowedMimeTypes.image,
+  }).single('image'),
+  validationMiddleware(userSchemas.uploadProfileImageSchema),
+  userController.uploadProfileImage
+);
+
+router.patch(
+  '/me/cover-images',
+  authenticationMiddleware(),
+  cloudMulter({
+    customPath: 'Users',
+    allowedTypes: allowedMimeTypes.image,
+  }).array('images', 2),
+  validationMiddleware(userSchemas.uploadCoverImagesSchema),
+  userController.uploadCoverImages
 );
 
 router.patch(

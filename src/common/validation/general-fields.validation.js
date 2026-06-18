@@ -31,4 +31,20 @@ export const generalFields = {
 
   gender: joi.string().valid(...Object.values(genderEnum)),
   age: joi.number().min(12).max(100),
+
+  file: {
+    BaseFields: {
+      originalname: joi.string().required(),
+      encoding: joi.string().required(),
+      destination: joi.string().required(),
+      filename: joi.string().required(),
+      path: joi.string().required(),
+      size: joi.number().positive().required(),
+    },
+    FilterFields: {
+      finalPath: joi.string().required(),
+      fieldname: joi.string().required(),
+      mimetype: joi.string().required(),
+    },
+  },
 };

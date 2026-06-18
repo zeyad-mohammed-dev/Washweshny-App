@@ -20,9 +20,23 @@ import {
 import { TokenModel } from '../../db/models/token.model.js';
 import { confirmEmail } from '../auth/auth.service.js';
 
+import { v2 as cloudinary } from 'cloudinary';
+import {
+  cloud,
+  cloudDeleteFile,
+  cloudDeleteFiles,
+  cloudDeleteUserAssets,
+  cloudUploadFile,
+  cloudUploadFiles,
+} from '../../utils/upload/cloudinary.js';
+
 export const getMyProfile = async (user) => {
-  user.phone = await decrypt(user.phone);
-  return user;
+  const userProfile = await DbService.findOne({
+    model: UserModel,
+    filter: { _id: user._id, confirmEmail: { $exists: true } },
+    select: 'firstName lastName email gender phone profileImage coverImages',
+  });
+  return userProfile;
 };
 
 export const getProfileById = async (userId) => {
@@ -106,6 +120,54 @@ export const updateMyProfile = async ({ user, body }) => {
     throw new NotFoundError('user not exist or something wrong happen');
   }
   return updatedUser;
+};
+
+export const uploadProfileImage = async (req) => {
+  const uploadResult = await cloudUploadFile({
+    file: req.file,
+    path: `users/${req.user._id}/profileImage`,
+  });
+  const user = await DbService.findOneAndUpdate({
+    model: UserModel,
+    filter: { _id: req.user._id },
+    data: {
+      profileImage: {
+        public_id: uploadResult.public_id,
+        secure_url: uploadResult.secure_url,
+      },
+    },
+    options: { returnDocument: 'before' },
+  });
+
+  if (user?.profileImage?.public_id) {
+    await cloudDeleteFile({ publicId: user.profileImage.public_id });
+  }
+
+  return;
+};
+
+export const uploadCoverImages = async (req) => {
+  const coverImages = await cloudUploadFiles({
+    files: req.files,
+    path: `users/${req.user._id}/coverImages`,
+  });
+  if (!coverImages.length) {
+    throw new UnprocessableError('No cover images uploaded');
+  }
+
+  const user = await DbService.findOneAndUpdate({
+    model: UserModel,
+    filter: { _id: req.user._id },
+    data: { coverImages },
+    options: { returnDocument: 'before' },
+  });
+
+  if (user?.coverImages?.length) {
+    await cloudDeleteFiles({
+      publicIds: user.coverImages.map((image) => image.public_id),
+    });
+  }
+  return;
 };
 
 export const updatePassword = async ({ user, body, decoded }) => {
@@ -221,6 +283,7 @@ export const deleteAccount = async (req) => {
   if (user.deletedCount === 0) {
     throw new NotFoundError('user not exist or not freezed ');
   }
+  await cloudDeleteUserAssets({ folderPath: `users/${userId}` });
 
   return;
 };
