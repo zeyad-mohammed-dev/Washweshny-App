@@ -19,6 +19,15 @@ const userSchema = new mongoose.Schema(
       minlength: [2, 'Last name must be at least 2 characters long'],
       maxlength: [25, 'Last name must be at most 25 characters long'],
     },
+
+    age: {
+      type: Number,
+      required: function () {
+        return this.provider === providerEnum.system ? true : false;
+      },
+      min: [12, 'Age must be at least 12 years old'],
+      max: [100, 'Age must be at most 100 years old'],
+    },
     email: {
       type: String,
       required: true,
@@ -59,7 +68,26 @@ const userSchema = new mongoose.Schema(
     confirmEmail: Date,
     confirmEmailOtp: String,
     confirmEmailOtpExpiresAt: Date,
-    picture: String,
+
+    OtpCounter: {
+      type: Number,
+      default: 1,
+    },
+    freezedAt: Date,
+
+    forgetPasswordOtp: String,
+    forgetPasswordOtpExpiresAt: Date,
+
+    profileImage: { public_id: String, secure_url: String },
+    coverImages: [{ public_id: String, secure_url: String }],
+
+    deletedAt: Date,
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+    restoredAt: Date,
+    restoredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+    changeCredentialsTime: Date,
   },
   {
     timestamps: true,

@@ -1,6 +1,6 @@
 //========================================== 🌍 Environment Configuration ==========================================
 import * as dotenv from 'dotenv';
-import path from 'path';
+import path from 'node:path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -19,10 +19,15 @@ dotenv.config({
 
 import express from 'express';
 import colors from 'colors';
-import authController from './modules/auth/auth.controller.js';
-import userController from './modules/user/user.controller.js';
-import connectDB from './DB/connection.db.js';
+import authRouter from './modules/auth/auth.routes.js';
+import userRouter from './modules/user/user.routes.js';
+import connectDB from './db/connection.db.js';
 import cors from 'cors';
+import { successResponse } from './utils/response/response.js';
+import {
+  globalErrorHandler,
+  notFoundHandler,
+} from './middleware/error.middleware.js';
 
 const bootstrap = async () => {
   const app = express();
@@ -33,28 +38,23 @@ const bootstrap = async () => {
 
   //========================================== 🧰 Global Middlewares ==========================================
   app.use(cors());
+  app.use('/uploads', express.static(path.resolve('./uploads')));
   app.use(express.json());
 
   //========================================== 🌐 Routes ==========================================
   app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to Washweshny App 💖' });
+    successResponse({ res, message: 'Welcome to Washweshny App 💖' });
   });
 
-  app.use('/auth', authController);
-  app.use('/users', userController);
+  //========================================== 🧑‍🤝‍🧑 Module Routes ==========================================
+  app.use('/api/auth', authRouter);
+  app.use('/api/users', userRouter);
 
   //========================================== ❌ Not Found Handler ==========================================
-  app.all('{/*dummy}', (req, res) => {
-    res.status(404).json({ message: 'Route not found ❌ dummy' });
-  });
+  app.all('{/*dummy}', notFoundHandler);
 
   //========================================== 🧯 Global Error Handler ==========================================
-  app.use((error, req, res, next) => {
-    console.log(colors.red({ error_stack: error.stack }));
-    res.status(error.cause || 400).json({
-      message: error.message,
-    });
-  });
+  app.use(globalErrorHandler);
 
   //========================================== 🚀 Start Server ==========================================
   app.listen(port, () => {

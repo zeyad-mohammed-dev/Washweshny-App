@@ -1,18 +1,18 @@
 {
   "name": "washweshny-app",
   "version": "1.0.0",
-  "main": "./src/index.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
-    "start:watch": "node --watch ./src/index.js",
-    "start:dev": "nodemon"
+    "start": "node index.js",
+    "dev": "nodemon"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
     "colors": "^1.4.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
@@ -21,6 +21,7 @@
     "joi": "^18.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
+    "multer": "^2.1.1",
     "nanoid": "^5.1.11",
     "nodemailer": "^8.0.7"
   },

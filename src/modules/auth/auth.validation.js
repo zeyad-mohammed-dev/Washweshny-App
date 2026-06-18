@@ -13,6 +13,7 @@ export const loginSchema = {
     .required()
     .options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
 };
 
 export const signupSchema = {
@@ -20,11 +21,14 @@ export const signupSchema = {
     .append({
       fullName: generalFields.fullName.required(),
       confirmPassword: generalFields.confirmPassword.required(),
+      age: generalFields.age.required(),
+      gender: generalFields.gender.required(),
       phone: generalFields.phone.required(),
     })
     .required()
     .options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
 };
 
 export const confirmEmailSchema = {
@@ -37,6 +41,19 @@ export const confirmEmailSchema = {
     .required()
     .options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
+};
+
+export const requestConfirmEmailOTPSchema = {
+  body: joi
+    .object()
+    .keys({
+      email: generalFields.email.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
 };
 
 export const loginWithGoogleSchema = {
@@ -48,4 +65,40 @@ export const loginWithGoogleSchema = {
     .required()
     .options({ abortEarly: false }),
   query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
+};
+
+export const requestForgotPasswordOTPSchema = {
+  body: joi
+    .object()
+    .keys({
+      email: generalFields.email.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
+};
+
+export const confirmForgotPasswordOTPSchema = {
+  body: requestForgotPasswordOTPSchema.body
+    .append({
+      otp: generalFields.otp.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
+};
+
+export const resetPasswordSchema = {
+  body: confirmForgotPasswordOTPSchema.body
+    .append({
+      password: generalFields.password.required(),
+      confirmPassword: generalFields.confirmPassword.required(),
+    })
+    .required()
+    .options({ abortEarly: false }),
+  query: joi.object({}).options({ abortEarly: false }),
+  params: joi.object({}).options({ abortEarly: false }),
 };

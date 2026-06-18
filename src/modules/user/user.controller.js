@@ -1,22 +1,96 @@
+import { asyncHandler } from '../../utils/errors/async-handler.js';
+import { successResponse } from '../../utils/response/response.js';
 import * as userService from './user.service.js';
-import { Router } from 'express';
-import {
-  authenticationMiddleware,
-  authorizationMiddleware,
-} from '../../middleware/auth.middleware.js';
-import { tokenTypeEnum } from '../../utils/security/token.security.js';
-import { endpoints } from './user.authorization.js';
-const router = Router();
 
-router.get(
-  '/me',
-  authenticationMiddleware(),
-  authorizationMiddleware({ allowedRoles: endpoints.getMyProfile }),
-  userService.getMyProfile
-);
-router.post(
-  '/refresh-token',
-  authenticationMiddleware({ tokenType: tokenTypeEnum.refresh }),
-  userService.refreshToken
-);
-export default router;
+export const getMyProfile = asyncHandler(async (req, res, next) => {
+  const user = await userService.getMyProfile(req.user);
+  return successResponse({
+    res,
+    message: 'Profile retrieved successfully',
+    data: { user },
+  });
+});
+
+export const getProfileById = asyncHandler(async (req, res, next) => {
+  const user = await userService.getProfileById(req.params.userId);
+  return successResponse({
+    res,
+    message: 'Profile retrieved successfully',
+    data: { user },
+  });
+});
+
+export const refreshToken = asyncHandler(async (req, res, next) => {
+  const credentials = await userService.refreshToken(req);
+  return successResponse({
+    res,
+    message: 'Token refreshed successfully',
+    data: { credentials },
+  });
+});
+
+export const logout = asyncHandler(async (req, res, next) => {
+  const statusCode = await userService.logout(req);
+  return successResponse({
+    res,
+    message: 'Logged out successfully',
+    statusCode,
+  });
+});
+
+export const updateMyProfile = asyncHandler(async (req, res, next) => {
+  const user = await userService.updateMyProfile(req);
+  return successResponse({
+    res,
+    message: 'Profile updated successfully',
+    data: { user },
+  });
+});
+
+export const uploadProfileImage = asyncHandler(async (req, res, next) => {
+  await userService.uploadProfileImage(req);
+  return successResponse({
+    res,
+    message: 'Profile image uploaded successfully',
+  });
+});
+
+export const uploadCoverImages = asyncHandler(async (req, res, next) => {
+  await userService.uploadCoverImages(req);
+  return successResponse({
+    res,
+    message: 'Cover images uploaded successfully',
+  });
+});
+
+export const updatePassword = asyncHandler(async (req, res, next) => {
+  await userService.updatePassword(req);
+  return successResponse({
+    res,
+    message: 'Password updated successfully',
+  });
+});
+
+export const restoreAccount = asyncHandler(async (req, res, next) => {
+  await userService.restoreAccount(req);
+  return successResponse({
+    res,
+    message: 'Account restored successfully',
+  });
+});
+
+export const freezeAccount = asyncHandler(async (req, res, next) => {
+  await userService.freezeAccount(req);
+  return successResponse({
+    res,
+    message: 'Account freezed successfully',
+  });
+});
+
+export const deleteAccount = asyncHandler(async (req, res, next) => {
+  await userService.deleteAccount(req);
+  return successResponse({
+    res,
+    message: 'Account deleted successfully',
+  });
+});
