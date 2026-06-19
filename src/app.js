@@ -19,8 +19,11 @@ dotenv.config({
 
 import express from 'express';
 import colors from 'colors';
+
 import authRouter from './modules/auth/auth.routes.js';
 import userRouter from './modules/user/user.routes.js';
+import messageRouter from './modules/message/message.routes.js';
+
 import connectDB from './db/connection.db.js';
 import cors from 'cors';
 import { successResponse } from './utils/response/response.js';
@@ -49,6 +52,7 @@ const bootstrap = async () => {
   //========================================== 🧑‍🤝‍🧑 Module Routes ==========================================
   app.use('/api/auth', authRouter);
   app.use('/api/users', userRouter);
+  app.use('/api/messages', messageRouter);
 
   //========================================== ❌ Not Found Handler ==========================================
   app.all('{/*dummy}', notFoundHandler);

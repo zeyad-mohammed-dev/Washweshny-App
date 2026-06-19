@@ -62,7 +62,6 @@ router.patch(
   '/me/cover-images',
   authenticationMiddleware(),
   cloudMulter({
-    customPath: 'Users',
     allowedTypes: allowedMimeTypes.image,
   }).array('images', 2),
   validationMiddleware(userSchemas.uploadCoverImagesSchema),

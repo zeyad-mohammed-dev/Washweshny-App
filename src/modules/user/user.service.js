@@ -35,7 +35,20 @@ export const getMyProfile = async (user) => {
     model: UserModel,
     filter: { _id: user._id, confirmEmail: { $exists: true } },
     select: 'firstName lastName email gender phone profileImage coverImages',
+    populate: [
+      {
+        path: 'messages',
+        select: 'content attachments createdAt',
+        options: {
+          sort: { createdAt: -1 },
+        },
+      },
+    ],
   });
+
+  userProfile.phone = userProfile.phone
+    ? await decrypt(userProfile.phone)
+    : undefined;
   return userProfile;
 };
 
