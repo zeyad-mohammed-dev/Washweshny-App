@@ -3,6 +3,16 @@ export const genderEnum = { male: 'male', female: 'female' };
 export const roleEnum = { admin: 'admin', user: 'user' };
 export const providerEnum = { system: 'system', google: 'google' };
 
+const attachmentSchema = new mongoose.Schema(
+  {
+    public_id: String,
+    secure_url: String,
+  },
+  {
+    _id: false,
+  }
+);
+
 const userSchema = new mongoose.Schema(
   {
     firstName: {
@@ -78,8 +88,8 @@ const userSchema = new mongoose.Schema(
     forgetPasswordOtp: String,
     forgetPasswordOtpExpiresAt: Date,
 
-    profileImage: { public_id: String, secure_url: String },
-    coverImages: [{ public_id: String, secure_url: String }],
+    profileImage: attachmentSchema,
+    coverImages: [attachmentSchema],
 
     deletedAt: Date,
     deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -106,6 +116,12 @@ userSchema
     this.firstName = firstName;
     this.lastName = lastName;
   });
+
+userSchema.virtual('messages', {
+  ref: 'Message',
+  localField: '_id',
+  foreignField: 'receiverId',
+});
 
 export const UserModel =
   mongoose.model.User || mongoose.model('User', userSchema);
